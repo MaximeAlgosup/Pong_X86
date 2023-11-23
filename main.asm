@@ -1,63 +1,56 @@
 org 100h
 
 section .data
-    ball db 0x00, 0x00, 0x0f, 0x0f, 0x0f, 0x0f, 0x00, 0x00
-        db 0x00, 0x0f, 0x03, 0x03, 0x03, 0x03, 0x0f, 0x00
-        db 0x0f, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x0f
-        db 0x0f, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x0f
-        db 0x0f, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x0f
-        db 0x0f, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x0f
-        db 0x00, 0x0f, 0x03, 0x03, 0x03, 0x03, 0x0f, 0x00
-        db 0x00, 0x00, 0x0f, 0x0f, 0x0f, 0x0f, 0x00, 0x00
-        
-    xPos dw 0h ; x position of the ball
-    yPos dw 0h ; y position of the ball
+    ; Set clock to temporise the game loops
+    base: equ 0xf9fe
+    old_time: equ base+0x06
 
 section .text
     main:
-        mov ah, 00h ; set video mode requirement
-        mov al, 13h ; set video mode option o 320 x 200 256 colors
-        int 10h
-
-        mov si, ball
-        ; set start x position of the ball
-        mov [xPos], word 160
-        ; set start y position of the ball
-        add ax, 320*96
-        add ax, [xPos]
-        mov [xPos], ax
-        sub [xPos], byte 16
-        ; main loop
+        call setVideoMode
         call clearScreen
-        mov bx, 0
-        .gameLoop:
-           call clearScreen
-            mov di, [xPos]
-            call drawBall
-            mov cx, 0xffff
-            .waitloop: 
-                loop .waitloop
-            call moveUp
-            inc bx
-            cmp bx, 50
-            jne .gameLoop
-            
+        call gameLoop
 
-        ;reset the keyboard buffer and then wait for a keypress :
+        ; reset the keyboard buffer
         mov ax, 0C01h ; 
         int 21h
 
         ;dos box default video mode
         mov ax, 03h 
         int 21h
-        int 20h ;quit
+        ; End of the game
+        int 20h
+        
+    ; Game loop
+    gameLoop:
+        ; Display the sprites
+        call displaySprite
 
-    ; wait function
-    waitFunction:
-        mov cx, 0xffff
-        .waitLoop:
-            loop .waitLoop
+        ; Wait for the clock
+        call waitClock
+        ; Check if the game is over
+
+        
+
+        ; Read the keyboard
+        jmp gameLoop
         ret
+
+
+        
+    waitClock:
+        mov ax, 0000h
+        int 1ah ; Read clock
+        cmp dx, [old_time]
+        je waitClock
+        mov [old_time], dx
+        ret
+
+    setVideoMode:
+       mov ah, 00h
+       mov al, 13h
+       int 10h 
+       ret
 
     clearScreen:
         mov ax, 0xA000
@@ -67,18 +60,7 @@ section .text
         rep stosb
         ret
 
-    drawBall:
-        mov ax, 0xA000
-        mov es, ax
-        mov dx, 8
-        .eachLine:
-            mov cx, 8
-            rep movsb
-            add di, 320-8
-            dec dx
-            jnz .eachLine
-        ret
-    
-    moveUp:
-        sub [xPos], word 320
-        ret
+    ; Import files to display sprites and read keyboard
+    %include "display_sprite.asm"
+    %include "keyboard_reader.asm"
+    %include "debug.asm"
