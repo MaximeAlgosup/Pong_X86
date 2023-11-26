@@ -28,6 +28,7 @@ section .text
 
         ; Wait for the clock
         call waitClock
+        
         ; Check if the game is over
 
         
@@ -40,9 +41,9 @@ section .text
         
     waitClock:
         mov ax, 0000h
-        int 1ah ; Read clock
-        cmp dx, [old_time]
-        je waitClock
+        int 1ah ; BIOS clock read
+        cmp dx, [old_time] ; Wait for change
+        je waitClock ; Loop
         mov [old_time], dx
         ret
 
@@ -63,4 +64,5 @@ section .text
     ; Import files to display sprites and read keyboard
     %include "display_sprite.asm"
     %include "keyboard_reader.asm"
+    %include "move_calculator.asm"
     %include "debug.asm"
