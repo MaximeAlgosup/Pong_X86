@@ -11,6 +11,9 @@ section .text
         call clearScreen
         call gameLoop
 
+    exit:
+        call clearScreen
+
         ; reset the keyboard buffer
         mov ax, 0C01h ; 
         int 21h
@@ -34,6 +37,8 @@ section .text
         
 
         ; Read the keyboard
+        call readKeyboard
+
         jmp gameLoop
         ret
 

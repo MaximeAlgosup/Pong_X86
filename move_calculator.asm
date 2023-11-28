@@ -1,20 +1,19 @@
 %define SCREENW 320
 %define SCREENH 200
 section .data
-    xSpeed dw 8
-    ySpeed dw 4
+    ballXSpeed dw 4
+    ballYSpeed dw 2
 
-    tmpXPos dw 0
-    tmpYPos dw 0
+    playerPadSpeed dw 2
 
 section .text
     moveBall:
         ;Simulate next ball position
-        mov bx, [xPos]
-        add bx, [xSpeed]
+        mov bx, [ballXPos]
+        add bx, [ballXSpeed]
 
-        mov cx, [yPos]
-        add cx, [ySpeed]
+        mov cx, [ballYPos]
+        add cx, [ballYSpeed]
 
         ; Check if ball collided with the r wall
         cmp bx, SCREENW-8
@@ -24,7 +23,7 @@ section .text
         cmp bx, 0
         jle ChangeXDir
 
-        mov [xPos], bx
+        mov [ballXPos], bx
         skipx:
         ; Check if ball collided with the bottom wall
         cmp cx, SCREENH-8
@@ -34,31 +33,53 @@ section .text
         cmp cx, 0
         jle ChangeYDir
 
-        mov [yPos], cx
+        mov [ballYPos], cx
         skipy:
-            call setAbsPosition
+            call setBallAbsPosition
             ret
 
 
     ; Change the direction of the ball on x axis
     ChangeXDir:
-        mov dx, [xSpeed]
+        mov dx, [ballXSpeed]
         imul dx, -1
-        mov [xSpeed], dx
+        mov [ballXSpeed], dx
         jmp skipx
 
     ; Change the direction of the ball on y axis
     ChangeYDir:
-        mov dx, [ySpeed]
+        mov dx, [ballYSpeed]
         imul dx, -1
-        mov [ySpeed], dx
+        mov [ballYSpeed], dx
         jmp skipy
 
     ; Set the absolute position of the ball (absolut in video memory)
-    setAbsPosition:
-        mov ax, [yPos]
+    setBallAbsPosition:
+        mov ax, [ballYPos]
         mov cx, SCREENW
         mul cx, 
-        add ax, [xPos]
-        mov [absPos], ax
+        add ax, [ballXPos]
+        mov [ballAbsPos], ax
+        ret
+
+    ; Move up the player pad
+    moveUp:
+        mov ax, [playerPadYPos]
+        sub ax, [playerPadSpeed]
+        mov [playerPadYPos], ax
+        ret
+
+    ; Move down the player pad
+    moveDown:
+        mov ax, [playerPadYPos]
+        add ax, [playerPadSpeed]
+        mov [playerPadYPos], ax
+        ret
+
+    ; Set the absolute position of the player pad (absolut in video memory)
+    setPlayerPadAbsPosition:
+        mov ax, [playerPadYPos]
+        mov cx, SCREENW
+        mul cx, 
+        mov [playerPadAbsPos], ax
         ret
